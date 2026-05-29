@@ -8,12 +8,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte(os.Getenv("JWT_SECRET"))
-
 type Claims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
 	jwt.RegisteredClaims
+}
+
+func secretKey() []byte {
+	return []byte(os.Getenv("JWT_SECRET"))
 }
 
 func Generate(userID, email string) (string, error) {
@@ -27,7 +29,7 @@ func Generate(userID, email string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secretKey)
+	return token.SignedString(secretKey())
 }
 
 func Validate(tokenStr string) (*Claims, error) {
@@ -35,7 +37,7 @@ func Validate(tokenStr string) (*Claims, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("método de assinatura inválido")
 		}
-		return secretKey, nil
+		return secretKey(), nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("token inválido: %w", err)
