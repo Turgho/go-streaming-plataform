@@ -30,7 +30,6 @@ func AuthInterceptor(userClient userpb.UserServiceClient) grpc.UnaryServerInterc
 		token := strings.TrimPrefix(tokens[0], "Bearer ")
 
 		user, err := userClient.ValidateToken(ctx, &userpb.ValidateTokenRequest{Token: token})
-		log.Printf("ValidateToken err: %v", err)
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, "token inválido")
 		}
