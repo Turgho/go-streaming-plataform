@@ -1,3 +1,61 @@
 syntax="proto3";
-package user;
+package upload;
 option go_package = "./pkg/pb";
+
+import "google/protobuf/timestamp.proto";
+
+enum VideoStatus {
+  UPLOADED    = 0;
+  TRANSCODING = 1;
+  READY       = 2;
+  ERROR       = 3;
+}
+
+service UploadService {
+    rpc UploadVideo  (stream UploadVideoRequest) returns (UploadVideoResponse);
+    rpc GetByID      (GetByIDRequest)            returns (VideoMetadata);
+    rpc ListByUserID (ListByUserIDRequest)       returns (ListByUserIDResponse);
+    rpc UpdateStatus (UpdateStatusRequest)       returns (VideoMetadata);
+}
+
+message VideoMetadata {
+  string                    id          = 1;
+  string                    user_id     = 2;
+  string                    title       = 3;
+  string                    description = 4;
+  string                    mimetype    = 5;
+  int64                     size        = 6;
+  double                    duration    = 7;
+  VideoStatus               status      = 8;
+  string                    file_path   = 9;
+  google.protobuf.Timestamp created_at  = 10;
+  google.protobuf.Timestamp updated_at  = 11;
+}
+
+message UploadVideoRequest {
+    oneof data {
+        VideoMetadata metadata = 1;
+        bytes         chunk    = 2;
+    }
+}
+
+message UploadVideoResponse {
+    VideoMetadata video = 1;
+}
+
+message GetByIDRequest {
+    string id = 1;
+}
+
+message ListByUserIDRequest {
+    string user_id = 1;
+}
+
+message ListByUserIDResponse {
+    repeated VideoMetadata videos = 1;
+}
+
+message UpdateStatusRequest {
+    string      id     = 1;
+    VideoStatus status = 2;
+}
