@@ -1,18 +1,18 @@
 package entities
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
 
 type User struct {
-	ID           string
-	Username     string
-	Email        string
-	PasswordHash string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           string    `bson:"_id"`
+	Username     string    `bson:"username"`
+	Email        string    `bson:"email"`
+	PasswordHash string    `bson:"password_hash"`
+	CreatedAt    time.Time `bson:"created_at"`
+	UpdatedAt    time.Time `bson:"updated_at"`
 }
 
 func NewUser(id string, username, email, passwordHash string) (*User, error) {
@@ -32,7 +32,7 @@ func NewUser(id string, username, email, passwordHash string) (*User, error) {
 	}
 
 	if len(errs) > 0 {
-		return nil, errors.New(strings.Join(errs, "; "))
+		return nil, fmt.Errorf("user inválido: %s", strings.Join(errs, ", "))
 	}
 
 	now := time.Now().UTC()
