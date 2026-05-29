@@ -1,0 +1,55 @@
+syntax="proto3";
+package user;
+option go_package = "./pkg/pb";
+
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+    rpc Register      (RegisterRequest)      returns (User);
+    rpc Login         (LoginRequest)         returns (LoginResponse);
+    rpc GetByID       (GetByIDRequest)       returns (User); 
+    rpc GetByEmail    (GetByEmailRequest)    returns (User);
+    rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+message User {
+  string id                            = 1;
+  string username                      = 2;
+  string email                         = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message RegisterRequest {
+  string username         = 1;
+  string email            = 2;
+  string password         = 3;
+  string confirm_password = 4;
+}
+
+message LoginRequest {
+  string email    = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+    string token = 1;
+    User   user  = 2;
+}
+
+message GetByIDRequest {
+    string id = 1;
+}
+
+message GetByEmailRequest {
+    string email = 1;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  string user_id = 1;
+  string email   = 2;
+}
