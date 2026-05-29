@@ -28,6 +28,11 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
+.idea/
 .vscode/
+
+# gRPC
 **/pkg/*pb/*.go
+
+# Misc
+**.mp4
