@@ -2,10 +2,8 @@ package server
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"user-service/internal/domain/entities"
-	domain "user-service/internal/domain/repository"
+	domain "user-service/internal/domain/repositories"
 	"user-service/internal/infra/jwt"
 	"user-service/pkg/hash"
 	"user-service/pkg/pb"
@@ -28,11 +26,11 @@ func NewUserServer(repo domain.UserRepository) *Server {
 func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.User, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new UUID: %v", err)
+		return nil, status.Error(codes.Internal, "failed to generate user id")
 	}
 
 	if req.Password != req.ConfirmPassword {
-		return nil, errors.New("passwords don't match")
+		return nil, status.Error(codes.InvalidArgument, "senhas não iguais")
 	}
 
 	passwordHash := hash.HashPassword(req.Password)
@@ -51,7 +49,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Use
 
 func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	if req.Email == "" || req.Password == "" {
-		return nil, errors.New("email ou senha inválidos")
+		return nil, status.Error(codes.InvalidArgument, "email ou senha inválidos")
 	}
 
 	user, err := s.repo.GetByEmail(ctx, req.Email)
@@ -60,7 +58,7 @@ func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	}
 
 	if !hash.VerifyPassword(req.Password, user.PasswordHash) {
-		return nil, errors.New("senha inválida")
+		return nil, status.Error(codes.InvalidArgument, "senha inválidos")
 	}
 
 	token, err := jwt.Generate(user.ID, user.Email)
