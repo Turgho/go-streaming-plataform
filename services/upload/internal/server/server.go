@@ -3,12 +3,15 @@ package server
 import (
 	"context"
 	"io"
+	"log"
 	"mime"
 	"os"
 	"path/filepath"
 	"upload-service/internal/domain/entities"
+	"upload-service/internal/domain/events"
 	domain "upload-service/internal/domain/repositories"
 	"upload-service/internal/infra/interceptor"
+	"upload-service/internal/infra/message"
 	"upload-service/pkg/pb"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -20,10 +23,14 @@ import (
 type Server struct {
 	pb.UnimplementedUploadServiceServer
 	repo domain.VideoRepository
+	nats *message.NatsClient
 }
 
-func NewServer(repo domain.VideoRepository) *Server {
-	return &Server{repo: repo}
+func NewServer(repo domain.VideoRepository, nats *message.NatsClient) *Server {
+	return &Server{
+		repo: repo,
+		nats: nats,
+	}
 }
 
 func (s *Server) UploadVideo(stream pb.UploadService_UploadVideoServer) error {
@@ -89,7 +96,16 @@ func (s *Server) UploadVideo(stream pb.UploadService_UploadVideoServer) error {
 		return status.Errorf(codes.Internal, "failed to save video: %v", err)
 	}
 
-	// NATS vai aqui depois
+	// NATS
+	event := events.VideoUploadedEvent{
+		VideoID:  video.ID,
+		FilePath: video.FilePath,
+		Mimetype: string(video.Mimetype),
+	}
+
+	if err := s.nats.Publish(events.VideoUploaded, event); err != nil {
+		log.Printf("failed to publish event: %v", err)
+	}
 
 	return stream.SendAndClose(&pb.UploadVideoResponse{
 		Video: toProtoVideo(video),
