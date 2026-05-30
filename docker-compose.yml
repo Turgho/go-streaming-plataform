@@ -1,8 +1,8 @@
 services:
   user-service:
     build:
-      context: ./services/user
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/user/Dockerfile
     ports:
       - "50051:50051"
     environment:
@@ -15,8 +15,8 @@ services:
 
   upload-service:
     build:
-      context: ./services/upload
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/upload/Dockerfile
     ports:
       - "50052:50052"
     environment:
@@ -24,12 +24,30 @@ services:
       MONGO_DB: ${MONGO_UPLOAD_DB}
       JWT_SECRET: ${JWT_SECRET}
       NATS_URL: ${NATS_URL}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+    volumes:
+      - videos-data:/data/videos
     depends_on:
       upload-db:
         condition: service_healthy
       user-service:
         condition: service_started
       nats:
+        condition: service_started
+
+  transcode-service:
+    build:
+      context: .
+      dockerfile: services/transcode/Dockerfile
+    environment:
+      NATS_URL: ${NATS_URL}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+    volumes:
+      - videos-data:/data/videos
+    depends_on:
+      nats:
+        condition: service_started
+      upload-service:
         condition: service_started
 
   user-db:
@@ -56,7 +74,6 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_UPLOAD_DB}
     volumes:
       - upload-db-data:/data/db
-       - upload-videos:/data/videos
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping')\" > /dev/null 2>&1"]
       interval: 5s
@@ -71,4 +88,4 @@ services:
 volumes:
   user-db-data:
   upload-db-data:
-  upload-videos:
+  videos-data:
