@@ -7,6 +7,7 @@ import (
 	"os"
 	"upload-service/internal/infra/database"
 	"upload-service/internal/infra/interceptor"
+	"upload-service/internal/infra/message"
 	"upload-service/internal/repository"
 	"upload-service/internal/server"
 	"upload-service/pkg/pb"
@@ -48,7 +49,14 @@ func main() {
 		grpc.StreamInterceptor(interceptor.AuthStreamInterceptor(userClient)),
 	)
 
-	pb.RegisterUploadServiceServer(grpcServer, server.NewServer(repo))
+	// nats messaging
+	natsClient, err := message.NewNatsClient(os.Getenv("NATS_URL"))
+	if err != nil {
+		log.Fatalf("failed to connect to nats: %v", err)
+	}
+	defer natsClient.Close()
+
+	pb.RegisterUploadServiceServer(grpcServer, server.NewServer(repo, natsClient))
 	reflection.Register(grpcServer)
 
 	lis, err := net.Listen("tcp", ":50052")
