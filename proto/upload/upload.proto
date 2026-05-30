@@ -12,10 +12,11 @@ enum VideoStatus {
 }
 
 service UploadService {
-    rpc UploadVideo  (stream UploadVideoRequest) returns (UploadVideoResponse);
-    rpc GetByID      (GetByIDRequest)            returns (VideoMetadata);
-    rpc ListByUserID (ListByUserIDRequest)       returns (ListByUserIDResponse);
-    rpc UpdateStatus (UpdateStatusRequest)       returns (VideoMetadata);
+    rpc UploadVideo    (stream UploadVideoRequest) returns (UploadVideoResponse);
+    rpc GetByID        (GetByIDRequest)            returns (VideoMetadata);
+    rpc ListByUserID   (ListByUserIDRequest)       returns (ListByUserIDResponse);
+    rpc UpdateStatus   (UpdateStatusRequest)       returns (VideoMetadata);
+    rpc UpdateMetadata (UpdateMetadataRequest)     returns (VideoMetadata);
 }
 
 message VideoMetadata {
@@ -58,4 +59,10 @@ message ListByUserIDResponse {
 message UpdateStatusRequest {
     string      id     = 1;
     VideoStatus status = 2;
+}
+
+message UpdateMetadataRequest {
+    string id       = 1;
+    double duration = 2;
+    int64  size     = 3;
 }
