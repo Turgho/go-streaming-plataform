@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-
 	"upload-service/pkg/pb"
 
 	"google.golang.org/grpc"
@@ -41,14 +40,27 @@ func main() {
 		log.Fatalf("failed to start stream: %v", err)
 	}
 
-	// envia metadados
+	// abre o arquivo antes de enviar metadados
+	// para pegar o tamanho real
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatalf("failed to open file: %v", err)
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		log.Fatalf("failed to stat file: %v", err)
+	}
+
+	// envia metadados com size real do arquivo
 	err = stream.Send(&pb.UploadVideoRequest{
 		Data: &pb.UploadVideoRequest_Metadata{
 			Metadata: &pb.VideoMetadata{
 				Title:       "Meu video",
 				Description: "teste",
 				Mimetype:    "video/mp4",
-				Size:        1024,
+				Size:        stat.Size(),
 			},
 		},
 	})
@@ -56,14 +68,7 @@ func main() {
 		log.Fatalf("failed to send metadata: %v", err)
 	}
 
-	// abre o arquivo
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Fatalf("failed to open file: %v", err)
-	}
-	defer file.Close()
-
-	// envia chunks
+	// envia chunks de 64KB por vez
 	buf := make([]byte, 64*1024)
 	for {
 		n, err := file.Read(buf)
@@ -74,11 +79,13 @@ func main() {
 			log.Fatalf("failed to read file: %v", err)
 		}
 
-		stream.Send(&pb.UploadVideoRequest{
+		if err := stream.Send(&pb.UploadVideoRequest{
 			Data: &pb.UploadVideoRequest_Chunk{
 				Chunk: buf[:n],
 			},
-		})
+		}); err != nil {
+			log.Fatalf("failed to send chunk: %v", err)
+		}
 	}
 
 	res, err := stream.CloseAndRecv()
