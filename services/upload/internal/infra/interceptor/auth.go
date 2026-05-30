@@ -2,7 +2,6 @@ package interceptor
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	userpb "upload-service/pkg/userpb"
@@ -13,28 +12,63 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func AuthInterceptor(userClient userpb.UserServiceClient) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-		log.Println("AuthInterceptor chamado")
+const serviceKeyHeader = "x-service-key"
 
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Unauthenticated, "metadata ausente")
+// AuthInterceptor valida JWT de usuário ou chave interna para chamadas entre serviços.
+func AuthInterceptor(userClient userpb.UserServiceClient, serviceKey string) grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req any,
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (any, error) {
+		// UpdateStatus é usado apenas pelo transcode-service.
+		if info.FullMethod == "/upload.UploadService/UpdateStatus" {
+			if !validateServiceKey(ctx, serviceKey) {
+				return nil, status.Error(codes.Unauthenticated, "chave de serviço inválida")
+			}
+			return handler(ctx, req)
 		}
 
-		tokens := md.Get("authorization")
-		if len(tokens) == 0 {
-			return nil, status.Error(codes.Unauthenticated, "token ausente")
-		}
-
-		token := strings.TrimPrefix(tokens[0], "Bearer ")
-
-		user, err := userClient.ValidateToken(ctx, &userpb.ValidateTokenRequest{Token: token})
+		userID, err := authenticateUser(ctx, userClient)
 		if err != nil {
-			return nil, status.Error(codes.Unauthenticated, "token inválido")
+			return nil, err
 		}
 
-		ctx = context.WithValue(ctx, "user_id", user.UserId)
+		ctx = context.WithValue(ctx, UserIDKey, userID)
 		return handler(ctx, req)
 	}
+}
+
+func validateServiceKey(ctx context.Context, expected string) bool {
+	if expected == "" {
+		return false
+	}
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return false
+	}
+	keys := md.Get(serviceKeyHeader)
+	return len(keys) > 0 && keys[0] == expected
+}
+
+func authenticateUser(ctx context.Context, userClient userpb.UserServiceClient) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Error(codes.Unauthenticated, "metadata ausente")
+	}
+
+	tokens := md.Get("authorization")
+	if len(tokens) == 0 {
+		return "", status.Error(codes.Unauthenticated, "token ausente")
+	}
+
+	token := strings.TrimPrefix(tokens[0], "Bearer ")
+
+	user, err := userClient.ValidateToken(ctx, &userpb.ValidateTokenRequest{Token: token})
+	if err != nil {
+		return "", status.Error(codes.Unauthenticated, "token inválido")
+	}
+
+	return user.UserId, nil
 }
