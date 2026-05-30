@@ -23,10 +23,13 @@ services:
       MONGO_URI: ${MONGO_UPLOAD_URI}
       MONGO_DB: ${MONGO_UPLOAD_DB}
       JWT_SECRET: ${JWT_SECRET}
+      NATS_URL: ${NATS_URL}
     depends_on:
       upload-db:
         condition: service_healthy
       user-service:
+        condition: service_started
+      nats:
         condition: service_started
 
   user-db:
@@ -59,6 +62,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
 
 volumes:
   user-db-data:
