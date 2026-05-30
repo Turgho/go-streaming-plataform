@@ -15,9 +15,9 @@ type videoRepository struct {
 	collection *mongo.Collection
 }
 
-func NewVideoRepository(client *mongo.Client) domain.VideoRepository {
+func NewVideoRepository(client *mongo.Client, dbName string) domain.VideoRepository {
 	return &videoRepository{
-		collection: client.Database("upload_db").Collection("videos"),
+		collection: client.Database(dbName).Collection("videos"),
 	}
 }
 
@@ -72,6 +72,23 @@ func (v *videoRepository) UpdateStatus(ctx context.Context, id string, status en
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update video status: %w", err)
+	}
+	return nil
+}
+
+// UpdateMetadata implements [repositories.VideoRepository].
+func (v *videoRepository) UpdateMetadata(ctx context.Context, id string, duration float64, size int64) error {
+	_, err := v.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": id},
+		bson.M{"$set": bson.M{
+			"duration":   duration,
+			"size":       size,
+			"updated_at": time.Now().UTC(),
+		}},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update video metadata: %w", err)
 	}
 	return nil
 }
