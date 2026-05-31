@@ -53,27 +53,24 @@ func (uc *TranscodeUseCase) ProcessUploaded(ctx context.Context, event events.Vi
 func buildResolutions(width int) []string {
 	switch {
 	case width >= 3840:
-		return []string{"4K", "1440p", "1080p", "720p", "480p"}
+		return []string{"4K", "1440p", "1080p", "720p", "480p", "360p", "240p"}
 
 	case width >= 2560:
-		return []string{"1440p", "1080p", "720p", "480p"}
+		return []string{"1440p", "1080p", "720p", "480p", "360p", "240p"}
 
 	case width >= 1920:
-		return []string{"1080p", "720p", "480p"}
+		return []string{"1080p", "720p", "480p", "360p", "240p"}
 
 	case width >= 1280:
-		return []string{"720p", "480p"}
+		return []string{"720p", "480p", "360p", "240p"}
 
 	case width >= 854:
-		return []string{"480p"}
+		return []string{"480p", "360p", "240p"}
 
 	case width >= 640:
-		return []string{"360p"}
-
-	case width >= 426:
-		return []string{"240p"}
+		return []string{"360p", "240p"}
 
 	default:
-		return []string{"144p"}
+		return []string{"240p"}
 	}
 }
