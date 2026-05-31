@@ -54,22 +54,6 @@ func (uc *VideoUseCase) UpdateStatus(ctx context.Context, id string, status enti
 	return video, nil
 }
 
-func (uc *VideoUseCase) UpdateMetadata(ctx context.Context, id string, duration float64, size int64) (*entities.Video, error) {
-	if err := uc.repo.UpdateMetadata(ctx, id, duration, size); err != nil {
-		return nil, err
-	}
-
-	video, err := uc.repo.GetByID(ctx, id)
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-
-	return video, nil
-}
-
 func IsNotFound(err error) bool {
 	return errors.Is(err, ErrNotFound)
 }
