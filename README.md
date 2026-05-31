@@ -5,7 +5,7 @@
 **Plataforma de streaming com microserviços em Go e gRPC.**
 
 [![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange?style=flat-square)](#)
-[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 [![gRPC](https://img.shields.io/badge/gRPC-protobuf-244c5a?style=flat-square&logo=google&logoColor=white)](https://grpc.io)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Docker-47a248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
