@@ -24,7 +24,6 @@ var variants = map[string]variantConfig{
 	"480p":  {Width: 854, Bitrate: "1000k"},
 	"360p":  {Width: 640, Bitrate: "500k"},
 	"240p":  {Width: 426, Bitrate: "300k"},
-	"144p":  {Width: 256, Bitrate: "150k"},
 }
 
 // ffmpegExec existe separado para facilitar testes/mocks.
@@ -38,7 +37,7 @@ func New() *FFmpegTranscoder {
 	return &FFmpegTranscoder{}
 }
 
-// Transcode gera as variações HLS em 3840p, 1440p, 1080p, 720p, 480p, 360p, 240p e 144p.
+// Transcode gera as variações HLS em 3840p, 1440p, 1080p, 720p, 480p, 360p e 240p.
 func (t *FFmpegTranscoder) Transcode(
 	ctx context.Context,
 	videoID,
