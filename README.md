@@ -5,7 +5,7 @@
 **Plataforma de streaming com microserviços em Go e gRPC.**
 
 [![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange?style=flat-square)](#)
-[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.26.3+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 [![gRPC](https://img.shields.io/badge/gRPC-protobuf-244c5a?style=flat-square&logo=google&logoColor=white)](https://grpc.io)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Docker-47a248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
@@ -137,13 +137,13 @@ INTERNAL_SERVICE_KEY=chave-interna-secreta
 
 <!-- MAKEFILE_START -->
 ```bash
-make proto-user                        # Gera código Go do proto do user-service
-make proto-upload                      # Gera código Go do proto do upload-service
-make proto-userpb-upload               # Copia user proto para o upload-service
-make proto-uploadpb-transcode          # Copia upload proto para o transcode-service
-make proto-all                         # Gera todos os protos
-make docker-up                         # Sobe todos os serviços e bancos
-make docker-down                       # Para os containers
+make proto-user                     # Gera código Go do proto do user-service
+make proto-upload                   # Gera código Go do proto do upload-service
+make proto-userpb-upload            # Copia user proto para o upload-service
+make proto-uploadpb-transcode       # Copia upload proto para o transcode-service
+make proto-all                      # Gera todos os protos
+make docker-up                      # Sobe todos os serviços e bancos
+make docker-down                    # Para os containers
 ```
 <!-- MAKEFILE_END -->
 
@@ -153,51 +153,112 @@ make docker-down                       # Para os containers
 
 <!-- TREE_START -->
 ```
-go-streaming-platform/
-├── proto/
-│   ├── user/
-│   │   └── user.proto
-│   └── upload/
-│       └── upload.proto
-├── services/
-│   ├── user/
-│   │   ├── cmd/server/
-│   │   ├── internal/
-│   │   │   ├── domain/
-│   │   │   ├── handler/grpc/
-│   │   │   ├── infra/
-│   │   │   ├── repository/
-│   │   │   └── usecase/
-│   │   └── pkg/
-│   │       ├── hash/
-│   │       └── pb/
-│   ├── upload/
-│   │   ├── cmd/
-│   │   │   ├── client/
-│   │   │   └── server/
-│   │   ├── internal/
-│   │   │   ├── domain/
-│   │   │   ├── handler/grpc/
-│   │   │   ├── infra/
-│   │   │   ├── repository/
-│   │   │   └── usecase/
-│   │   └── pkg/
-│   │       ├── pb/
-│   │       └── userpb/
-│   └── transcode/
-│       ├── cmd/worker/
-│       ├── internal/
-│       │   ├── domain/
-│       │   ├── handler/
-│       │   ├── infra/
-│       │   └── usecase/
-│       └── pkg/uploadpb/
-├── pkg/
-│   └── events/
-├── gateway/
-├── k8s/
-├── docker-compose.yml
-└── Makefile
+go-streaming-plataform/
+├── pkg
+│   └── events
+│       ├── go.mod
+│       └── video.go
+├── proto
+│   ├── upload
+│   │   └── upload.proto
+│   └── user
+│       └── user.proto
+├── services
+│   ├── transcode
+│   │   ├── cmd
+│   │   │   └── worker
+│   │   │       └── main.go
+│   │   ├── internal
+│   │   │   ├── domain
+│   │   │   │   └── transcode
+│   │   │   │       └── transcode.go
+│   │   │   ├── handler
+│   │   │   │   └── worker.go
+│   │   │   ├── infra
+│   │   │   │   ├── ffmpeg
+│   │   │   │   │   └── ffmpeg.go
+│   │   │   │   ├── grpc
+│   │   │   │   │   └── service_key.go
+│   │   │   │   ├── message
+│   │   │   │   │   └── nats.go
+│   │   │   │   └── upload
+│   │   │   │       └── client.go
+│   │   │   └── usecase
+│   │   │       └── transcode.go
+│   │   ├── Dockerfile
+│   │   └── go.mod
+│   ├── upload
+│   │   ├── cmd
+│   │   │   ├── client
+│   │   │   │   └── main.go
+│   │   │   └── server
+│   │   │       └── main.go
+│   │   ├── internal
+│   │   │   ├── domain
+│   │   │   │   ├── entities
+│   │   │   │   │   └── video.go
+│   │   │   │   ├── probe
+│   │   │   │   │   └── probe.go
+│   │   │   │   └── repositories
+│   │   │   │       └── video_repository.go
+│   │   │   ├── handler
+│   │   │   │   └── grpc
+│   │   │   │       ├── mapper.go
+│   │   │   │       ├── server.go
+│   │   │   │       └── stream_storage.go
+│   │   │   ├── infra
+│   │   │   │   ├── database
+│   │   │   │   │   └── mongo.go
+│   │   │   │   ├── interceptor
+│   │   │   │   │   ├── auth.go
+│   │   │   │   │   └── stream.go
+│   │   │   │   ├── message
+│   │   │   │   │   └── nats.go
+│   │   │   │   └── probe
+│   │   │   │       └── probe.go
+│   │   │   ├── repository
+│   │   │   │   └── video_repository.go
+│   │   │   └── usecase
+│   │   │       ├── errors.go
+│   │   │       ├── publisher.go
+│   │   │       ├── upload.go
+│   │   │       └── video.go
+│   │   ├── Dockerfile
+│   │   └── go.mod
+│   └── user
+│       ├── cmd
+│       │   └── server
+│       │       └── main.go
+│       ├── internal
+│       │   ├── domain
+│       │   │   ├── entities
+│       │   │   │   └── user.go
+│       │   │   └── repositories
+│       │   │       └── user_repository.go
+│       │   ├── handler
+│       │   │   └── grpc
+│       │   │       ├── mapper.go
+│       │   │       └── server.go
+│       │   ├── infra
+│       │   │   ├── database
+│       │   │   │   └── mongo.go
+│       │   │   └── jwt
+│       │   │       └── jwt.go
+│       │   ├── repository
+│       │   │   └── user_repository.go
+│       │   └── usecase
+│       │       └── user.go
+│       ├── pkg
+│       │   └── hash
+│       │       └── password.go
+│       ├── Dockerfile
+│       └── go.mod
+├── .env.example
+├── .gitignore
+├── LICENSE
+├── Makefile
+├── README.md
+└── docker-compose.yml
 ```
 <!-- TREE_END -->
 
