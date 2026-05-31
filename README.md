@@ -5,7 +5,7 @@
 **Plataforma de streaming com microserviços em Go e gRPC.**
 
 [![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange?style=flat-square)](#)
-[![Go](https://img.shields.io/badge/Go-1.26.3+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 [![gRPC](https://img.shields.io/badge/gRPC-protobuf-244c5a?style=flat-square&logo=google&logoColor=white)](https://grpc.io)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Docker-47a248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
@@ -31,7 +31,7 @@
 
 ## 📌 Sobre
 
-Monorepo de microserviços construído para explorar **gRPC na prática** com arquitetura limpa, comunicação entre serviços, autenticação via JWT e infraestrutura com Docker e Kubernetes.
+Monorepo de microserviços construído para explorar **gRPC na prática** com arquitetura limpa, comunicação assíncrona via NATS, transcodificação de vídeos com FFmpeg, autenticação via JWT e infraestrutura com Docker e Kubernetes.
 
 ---
 
@@ -43,6 +43,8 @@ Monorepo de microserviços construído para explorar **gRPC na prática** com ar
 | **gRPC / protobuf** | Comunicação entre serviços |
 | **MongoDB** | Banco de dados por serviço |
 | **JWT + Argon2id** | Autenticação e hash de senha |
+| **NATS** | Mensageria assíncrona entre serviços |
+| **FFmpeg** | Transcodificação de vídeos |
 | **Docker Compose** | Ambiente de desenvolvimento local |
 | **Kubernetes** | Orquestração em produção |
 | **GitHub Actions** | CI/CD |
@@ -51,10 +53,13 @@ Monorepo de microserviços construído para explorar **gRPC na prática** com ar
 
 ## 📦 Serviços
 
+<!-- SERVICES_START -->
 | Serviço | Porta | Descrição |
 |---|---|---|
-| **user-service** | `:50051` | Cadastro, login e validação de token |
-| **upload-service** | `:50052` | Upload de arquivos em chunks via client streaming |
+| **user-service** | `:50051` | Cadastro, login e validação de token JWT |
+| **upload-service** | `:50052` | Upload de vídeos em chunks via client streaming gRPC |
+| **transcode-service** | — | Transcodificação assíncrona de vídeos via NATS + FFmpeg |
+<!-- SERVICES_END -->
 
 ---
 
@@ -64,7 +69,7 @@ Monorepo de microserviços construído para explorar **gRPC na prática** com ar
 
 | Ferramenta | Uso |
 |---|---|
-| **Go 1.26.3+** | Linguagem principal |
+| **Go 1.23+** | Linguagem principal |
 | **Docker + Docker Compose** | Containers |
 | **protoc** | Compilador de `.proto` |
 | **protoc-gen-go** | Plugin Go para o protoc |
@@ -81,8 +86,8 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/Turgho/streaming-platform.git
-cd streaming-platform
+git clone https://github.com/Turgho/go-streaming-platform.git
+cd go-streaming-platform
 ```
 
 ### 2. Configure as variáveis de ambiente
@@ -104,61 +109,97 @@ make docker-up
 Crie o `.env` na raiz com o seguinte conteúdo:
 
 ```env
-# MongoDB
-MONGO_USER=root
-MONGO_PASSWORD=root
-MONGO_DB=user_db
-MONGO_URI=mongodb://root:root@user-db:27017/user_db?authSource=admin
+# User Service - MongoDB
+MONGO_USER_USER=root
+MONGO_USER_PASSWORD=root
+MONGO_USER_DB=user_db
+MONGO_USER_URI=mongodb://root:root@user-db:27017/user_db?authSource=admin
+
+# Upload Service - MongoDB
+MONGO_UPLOAD_USER=root
+MONGO_UPLOAD_PASSWORD=root
+MONGO_UPLOAD_DB=upload_db
+MONGO_UPLOAD_URI=mongodb://root:root@upload-db:27017/upload_db?authSource=admin
 
 # JWT
 JWT_SECRET=seu-segredo-aqui-minimo-32-caracteres
+
+# NATS
+NATS_URL=nats://nats:4222
+
+# Comunicação interna entre serviços
+INTERNAL_SERVICE_KEY=chave-interna-secreta
 ```
 
 ---
 
 ## 📦 Comandos disponíveis
 
+<!-- MAKEFILE_START -->
 ```bash
-make docker-up        # Sobe todos os serviços e bancos
-make docker-down      # Para os containers
-
-make proto-user       # Gera código Go a partir do proto do user-service
-make proto-upload     # Gera código Go a partir do proto do upload-service
+make proto-user                        # Gera código Go do proto do user-service
+make proto-upload                      # Gera código Go do proto do upload-service
+make proto-userpb-upload               # Copia user proto para o upload-service
+make proto-uploadpb-transcode          # Copia upload proto para o transcode-service
+make proto-all                         # Gera todos os protos
+make docker-up                         # Sobe todos os serviços e bancos
+make docker-down                       # Para os containers
 ```
+<!-- MAKEFILE_END -->
 
 ---
 
 ## 📁 Estrutura do projeto
 
+<!-- TREE_START -->
 ```
-streaming-platform/
+go-streaming-platform/
 ├── proto/
 │   ├── user/
 │   │   └── user.proto
 │   └── upload/
 │       └── upload.proto
-│
 ├── services/
 │   ├── user/
 │   │   ├── cmd/server/
 │   │   ├── internal/
 │   │   │   ├── domain/
+│   │   │   ├── handler/grpc/
 │   │   │   ├── infra/
 │   │   │   ├── repository/
+│   │   │   └── usecase/
+│   │   └── pkg/
+│   │       ├── hash/
+│   │       └── pb/
+│   ├── upload/
+│   │   ├── cmd/
+│   │   │   ├── client/
 │   │   │   └── server/
-│   │   ├── pkg/
-│   │   │   ├── hash/
-│   │   │   └── pb/
-│   │   └── Dockerfile
-│   │
-│   └── upload/
-│       └── ...
-│
+│   │   ├── internal/
+│   │   │   ├── domain/
+│   │   │   ├── handler/grpc/
+│   │   │   ├── infra/
+│   │   │   ├── repository/
+│   │   │   └── usecase/
+│   │   └── pkg/
+│   │       ├── pb/
+│   │       └── userpb/
+│   └── transcode/
+│       ├── cmd/worker/
+│       ├── internal/
+│       │   ├── domain/
+│       │   ├── handler/
+│       │   ├── infra/
+│       │   └── usecase/
+│       └── pkg/uploadpb/
+├── pkg/
+│   └── events/
 ├── gateway/
 ├── k8s/
 ├── docker-compose.yml
 └── Makefile
 ```
+<!-- TREE_END -->
 
 ---
 
