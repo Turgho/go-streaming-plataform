@@ -50,6 +50,21 @@ services:
       upload-service:
         condition: service_started
 
+  delivery-service:
+    build:
+      context: .
+      dockerfile: services/delivery/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      HTTP_PORT: ${DELIVERY_HTTP_PORT}
+      VIDEOS_PATH: ${DELIVERY_VIDEO_PATH}
+    volumes:
+      - videos-data:/data/videos
+    depends_on:
+      transcode-service:
+        condition: service_started
+
   user-db:
     image: mongo:7
     command: ["mongod", "--quiet"]
