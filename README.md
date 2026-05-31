@@ -164,6 +164,17 @@ go-streaming-plataform/
 │   └── user
 │       └── user.proto
 ├── services
+│   ├── delivery
+│   │   ├── cmd
+│   │   │   └── server
+│   │   │       └── main.go
+│   │   ├── internal
+│   │   │   └── handler
+│   │   │       ├── middleware.go
+│   │   │       ├── routes.go
+│   │   │       └── videos.go
+│   │   ├── Dockerfile
+│   │   └── go.mod
 │   ├── transcode
 │   │   ├── cmd
 │   │   │   └── worker
