@@ -14,6 +14,10 @@ import (
 
 const serviceKeyHeader = "x-service-key"
 
+var internalMethods = map[string]bool{
+	"/upload.UploadService/UpdateStatus": true,
+}
+
 // AuthInterceptor valida JWT de usuário ou chave interna para chamadas entre serviços.
 func AuthInterceptor(userClient userpb.UserServiceClient, serviceKey string) grpc.UnaryServerInterceptor {
 	return func(
@@ -22,8 +26,8 @@ func AuthInterceptor(userClient userpb.UserServiceClient, serviceKey string) grp
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (any, error) {
-		// UpdateStatus é usado apenas pelo transcode-service.
-		if info.FullMethod == "/upload.UploadService/UpdateStatus" {
+		// verificação de métodos para transcode-service.
+		if internalMethods[info.FullMethod] {
 			if !validateServiceKey(ctx, serviceKey) {
 				return nil, status.Error(codes.Unauthenticated, "chave de serviço inválida")
 			}
