@@ -121,6 +121,10 @@ MONGO_UPLOAD_PASSWORD=root
 MONGO_UPLOAD_DB=upload_db
 MONGO_UPLOAD_URI=mongodb://root:root@upload-db:27017/upload_db?authSource=admin
 
+# Delivery Service
+DELIVERY_HTTP_PORT=8080
+DELIVERY_VIDEO_PATH=/data/videos
+
 # JWT
 JWT_SECRET=seu-segredo-aqui-minimo-32-caracteres
 
