@@ -5,7 +5,7 @@ COPY services/user/go.mod services/user/go.sum ./
 RUN go mod download
 
 COPY services/user .
-RUN go build -o /bin/server cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/server cmd/server/main.go
 
 FROM alpine:latest
 WORKDIR /app
