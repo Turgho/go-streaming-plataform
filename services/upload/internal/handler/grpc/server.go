@@ -136,29 +136,6 @@ func (s *Server) UpdateStatus(ctx context.Context, req *pb.UpdateStatusRequest) 
 	return toProtoVideo(video), nil
 }
 
-func (s *Server) UpdateMetadata(ctx context.Context, req *pb.UpdateMetadataRequest) (*pb.VideoMetadata, error) {
-	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "id é obrigatório")
-	}
-
-	userID, err := userIDFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	existing, err := s.video.GetByID(ctx, req.Id, userID)
-	if err != nil {
-		return nil, mapUsecaseError(err)
-	}
-
-	video, err := s.video.UpdateMetadata(ctx, existing.ID, req.Duration, req.Size)
-	if err != nil {
-		return nil, mapUsecaseError(err)
-	}
-
-	return toProtoVideo(video), nil
-}
-
 func userIDFromContext(ctx context.Context) (string, error) {
 	userID, ok := ctx.Value(interceptor.UserIDKey).(string)
 	if !ok || userID == "" {
